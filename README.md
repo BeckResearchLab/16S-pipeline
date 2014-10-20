@@ -22,4 +22,6 @@ Getting started:
 * Edit the file __globals__ with the paths to the above files and the MySQL host and database name; Leave the __TRUNCLEN__ unchanged for now.
 * Look at the __0.setup__ script to make sure the paths to the data are correct and adjust as necessary to find the _.fasta_, _.qual_, and _mapping.txt_ files. 
 * Use the __EXECUTE__ command to run the pipeline and review the results.  In particular, pay attention to the data in the __1.quality_filter.stats.log__ file.  Use the rules described on Rob Edgar's site, decide on the __TRUNCLEN__ and possibly the __MAXEE__ parameters.
+ * The __1.quality_filter.stats.log__ file contains data on the % of reads falling into the read length bins and what % of reads are accounted for buy a bin and cummlatively.  A choice needs to be made between the accumulated % of reads and the _avgEE_ (cumulative error rate average).  
 * Rerun the __EXECUTE__ command and examine the output.
+
