@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source globals
+
+if [ ! -e $0.stats.log ]
+then
+	$USEARCH -fastq_stats data/combined.fastq -log $0.stats.log
+fi
+
+# look at stats file
+
+echo based on stats.log using $TRUNCLEN and $MAXEE for trunclen and maxee respectively
+$USEARCH -fastq_filter data/combined.fastq -fastq_maxee 0.5 -fastq_trunclen $TRUNCLEN -fastaout data/combined.filtered.fasta >& $0.log
+

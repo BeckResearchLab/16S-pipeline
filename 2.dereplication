@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source globals
+
+echo running dereplication of data/combined.filtered.fasta and saving to data/combined.filtered.dereplicated.fasta
+echo $USEARCH -derep_fulllength data/combined.filtered.fasta -output data/combined.filtered.dereplicated.fasta -sizeout 
+$USEARCH -derep_fulllength data/combined.filtered.fasta -output data/combined.filtered.dereplicated.fasta -sizeout >& $0.log
+

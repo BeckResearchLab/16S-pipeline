@@ -1,0 +1,9 @@
+#!/bin/bash
+
+source globals
+
+echo removing chimeras
+echo $USEARCH -uchime_ref data/combined.otus.fasta -db data/gold.fa -strand plus -nonchimeras data/combined.non-chimeric.otus.fasta
+$USEARCH -uchime_ref data/combined.otus.fasta -db data/gold.fa -strand plus -nonchimeras data/combined.non-chimeric.otus.fasta >& $0.log
+
+

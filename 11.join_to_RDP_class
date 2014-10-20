@@ -1,0 +1,56 @@
+#!/bin/bash
+
+source globals
+
+SQL=$0.sql
+class_table=final_otus_classifications
+class_flat=final_otus_classifications_flat
+seq_table=final_otus_sequences
+otu_table=final_otus
+
+XLS=community_dynamics.RDP.xls
+
+cat << EOF > $SQL
+DROP TABLE IF EXISTS $class_flat;
+CREATE TABLE $class_flat
+SELECT otus.OTUId, 
+		d.name AS domain, d.confidence AS domain_confidence, 
+		p.name AS phylum, p.confidence AS phylum_confidence, 
+		c.name AS class, c.confidence AS class_confidence, 
+		o.name AS order_, o.confidence AS order_confidence, 
+		f.name AS family, f.confidence AS family_confidence, 
+		g.name AS genus, g.confidence AS genus_confidence, 
+		s.name AS species, s.confidence AS species_confidence
+	FROM (SELECT DISTINCT OTUId FROM $class_table) AS otus
+		LEFT JOIN $class_table AS d ON otus.OTUId = d.OTUId AND d.rank = "domain"
+		LEFT JOIN $class_table AS p ON otus.OTUId = p.OTUId AND p.rank = "phylum"
+		LEFT JOIN $class_table AS c ON otus.OTUId = c.OTUId AND c.rank = "class"
+		LEFT JOIN $class_table AS o ON otus.OTUId = o.OTUId AND o.rank = "order"
+		LEFT JOIN $class_table AS f ON otus.OTUId = f.OTUId AND f.rank = "family"
+		LEFT JOIN $class_table AS g ON otus.OTUId = g.OTUId AND g.rank = "genus"
+		LEFT JOIN $class_table AS s ON otus.OTUId = s.OTUId AND s.rank = "species"
+;
+
+SELECT ot.OTUId,
+EOF
+
+awk -F'\t' '{ if (line >= 1) { printf("\t\t%s AS \"%s.%s\",\n", $1, $2, $3); } ++line; }' $SAMPLE_INFO_SUBSET >> $SQL
+
+cat << EOF >> $SQL
+		domain, domain_confidence, phylum, phylum_confidence, class, class_confidence,
+			order_, order_confidence, family, family_confidence, genus, genus_confidence, species, species_confidence,
+		sequence
+	FROM $otu_table AS ot
+		INNER JOIN $class_flat AS cf ON ot.OTUId = cf.OTUId
+		INNER JOIN $seq_table AS st ON ot.OTUId = st.otu
+	ORDER BY ( 0
+EOF
+
+awk -F'\t' '{ if (line >= 1) { printf("\t\t\t+ %s\n", $1); } ++line; }' $SAMPLE_INFO_SUBSET >> $SQL
+
+cat << EOF >> $SQL
+		) DESC
+;
+EOF
+
+mysql -h $HOST $DB < $SQL | sed "s/NULL//g" > $XLS

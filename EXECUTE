@@ -1,0 +1,21 @@
+#!/bin/bash
+
+JOBS="0.setup 1.quality_filter 2.dereplication 3.abundance_sort 4.cluster 5.chimera 6.number_otus 7.map 8.make_table 9.classify 10.database 11.join_to_RDP_class"
+
+update_dependent=0
+
+for job in $JOBS
+do
+	echo $job
+	log=$job.log
+	# run the job if:
+	#   no log exists
+	#   a previous step was rerun
+	#   the log file is older than the job file
+	if [ ! -e $log -o $update_dependent -eq 1 -o $job -nt $log ]
+	then
+		echo running job...
+		time ./$job >& $log
+		update_dependent=1
+	fi
+done

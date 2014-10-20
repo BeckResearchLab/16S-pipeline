@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source globals
+
+#echo clustering to 97% identity
+#echo $USEARCH -cluster_otus data/combined.filtered.dereplicated.sorted.fasta -otus data/combined.otus.fasta -otuid .97
+#$USEARCH -cluster_otus data/combined.filtered.dereplicated.sorted.fasta -otus data/combined.otus.fasta -otuid .97 >& $0.log
+
+# the .95 is not an error; when using .97 for 97% Mila observed that all bins were 98%, assuming there is some kind of 'greater than'
+# effect in usearch
+echo clustering to $CLUSTER_IDENT identity
+echo $USEARCH -cluster_otus data/combined.filtered.dereplicated.sorted.fasta -otus data/combined.otus.fasta -otuid $CLUSTER_IDENT
+$USEARCH -cluster_otus data/combined.filtered.dereplicated.sorted.fasta -otus data/combined.otus.fasta -otuid $CLUSTER_IDENT >& $0.log
+

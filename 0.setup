@@ -1,0 +1,60 @@
+#!/bin/bash
+
+source globals
+
+clean=1
+if [ "$#" -ge 1 ]
+then
+	if [ "$1" == "clean" ]
+	then
+		echo "forcing regeneration of all files"
+		clean=1
+	else
+		echo "unknown argument: $1"
+		exit 1
+	fi
+fi
+
+mkdir -p data
+cd data
+
+echo downloading gold.fa for chimera detection
+if [ ! -e gold.fa ]
+then
+	wget http://drive5.com/uchime/gold.fa
+fi
+
+echo creating symlinks to data
+ln -sf ../../2014_*/fasta-qual-mapping-files/*illumina-full.* .
+ln -sf ../../2014_*/fasta-qual-mapping-files/*illumina-mapping2.txt* .
+
+echo making fastq
+for run in $RUNS
+do
+	if [ ! -e $run-full.fastq -o "$clean" -eq 1 ]
+	then
+		echo making fastq for $run
+		echo python $FQ2FASTQ $run-full.fasta $run-full.qual
+		python $FQ2FASTQ $run-full.fasta $run-full.qual > $run-full.fastq
+	fi
+done
+
+FQ=""
+echo strip barcode and primer and relabel
+for run in $RUNS
+do
+	if [ ! -e $run-clean.fastq -o "$clean" -eq 1 ]
+	then
+		awk '{ if (substr($0, 1, 1) != "#") { id = $1; sub("Sample454." , "", id); printf(">%s\n%s\n", id, $2); } }' $run-mapping2.txt > $run-barcodes.fasta
+		echo processing $run
+		echo python $FQRELABEL $run-full.fastq $PRIMER $run-barcodes.fasta ${run}_
+		python $FQRELABEL $run-full.fastq $PRIMER $run-barcodes.fasta ${run}_ > $run-clean.fastq
+	fi
+	FQ="$FQ $run-clean.fastq"
+done
+
+echo combining $FQ into combined.fastq
+if [ ! -e combined.fastq -o "$clean" -eq 1 ]
+then
+	cat $FQ > combined.fastq
+fi

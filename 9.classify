@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#PBS -N "classify"
+#PBS -d /gscratch/lidstrom/community_dynamics/combined_analyses
+#PBS -l walltime=999:99:99,mem=2gb,feature=8core,nodes=1:ppn=8
+#PBS -W group_list=hyak-lidstrom
+#PBS -M dacb@uw.edu
+#PBS -m abe
+#PBS -o 9.classify.log
+#PBS -e 9.classify.err
+
+source globals
+
+FA=data/combined.final.otus.fasta
+XLS=data/combined.final.otus.classified.xls
+BOUT=data/combined.final.otus.RDP.blast
+
+if [ ! -e $XLS ] 
+then
+	echo running RDP classifier on OTUs
+	echo java -Xmx1g -jar $CLFRJAR classify -g 16srrna $FA -o $XLS
+	java -Xmx1g -jar $CLFRJAR classify -g 16srrna $FA -o $XLS
+fi

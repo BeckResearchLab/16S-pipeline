@@ -1,0 +1,9 @@
+#!/bin/bash
+
+source globals
+
+echo mapping reads back to otus to get counts
+echo $USEARCH -usearch_global data/combined.filtered.fasta -db data/combined.final.otus.fasta -strand plus -id $CLUSTER_IDENT -uc data/combined.read_to_otu.map.uc
+$USEARCH -usearch_global data/combined.filtered.fasta -db data/combined.final.otus.fasta -strand plus -id $CLUSTER_IDENT -uc data/combined.read_to_otu.map.uc >& $0.log
+
+

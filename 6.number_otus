@@ -1,0 +1,7 @@
+#!/bin/bash
+
+source globals
+
+echo relabeling the OTUs in data/combined.non-chimeric.otus.fasta
+echo python $NUMBER data/combined.non-chimeric.otus.fasta OTU_ 
+python $NUMBER data/combined.non-chimeric.otus.fasta OTU_ > data/combined.final.otus.fasta

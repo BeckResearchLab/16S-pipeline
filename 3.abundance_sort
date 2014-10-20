@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source globals
+
+echo sorting by abundance and removing singletons
+echo $USEARCH -sortbysize data/combined.filtered.dereplicated.fasta -output data/combined.filtered.dereplicated.sorted.fasta -minsize 2
+$USEARCH -sortbysize data/combined.filtered.dereplicated.fasta -output data/combined.filtered.dereplicated.sorted.fasta -minsize 2 >& $0.log
+
