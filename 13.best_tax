@@ -1,0 +1,78 @@
+#!/bin/bash
+
+source globals.sh
+
+SQL=$0.sql
+XLS=$0.xls
+
+seq_table=final_otus_sequences
+otu_table=final_otus
+class_table=final_otus_classifications
+
+cat << EOF > $SQL
+DROP VIEW IF EXISTS persistent_OTUs;
+CREATE VIEW persistent_OTUs AS
+SELECT ot.OTUId,
+EOF
+
+awk -F'\t' -v otu_table="$otu_table" '{ if (line >= 1) { printf("\t\t%s,\n", $1); } ++line; }' $SAMPLE_INFO >> $SQL
+
+cat << EOF >> $SQL
+		d.name AS domain, d.confidence AS domain_confidence, 
+		p.name AS phylum, p.confidence AS phylum_confidence, 
+		c.name AS class, c.confidence AS class_confidence, 
+		o.name AS order_, o.confidence AS order_confidence, 
+		f.name AS family, f.confidence AS family_confidence, 
+		g.name AS genus, g.confidence AS genus_confidence, 
+		s.name AS species, s.confidence AS species_confidence,
+		IF(NOT(ISNULL(s.name)) && NOT(ISNULL(s.confidence)) && s.confidence > $PERSISTENT_BEST_PCNT, s.name,
+			IF(NOT(ISNULL(g.name)) && NOT(ISNULL(g.confidence)) && g.confidence > $PERSISTENT_BEST_PCNT, g.name,
+				IF(NOT(ISNULL(f.name)) && NOT(ISNULL(f.confidence)) && f.confidence > $PERSISTENT_BEST_PCNT, f.name,
+					IF(NOT(ISNULL(o.name)) && NOT(ISNULL(o.confidence)) && o.confidence > $PERSISTENT_BEST_PCNT, o.name,
+						IF(NOT(ISNULL(c.name)) && NOT(ISNULL(c.confidence)) && c.confidence > $PERSISTENT_BEST_PCNT, c.name,
+							IF(NOT(ISNULL(p.name)) && NOT(ISNULL(p.confidence)) && p.confidence > $PERSISTENT_BEST_PCNT, p.name,
+								IF(NOT(ISNULL(d.name)) && NOT(ISNULL(d.confidence)) && d.confidence > $PERSISTENT_BEST_PCNT, d.name, "unknown"))))))) AS best_tax,
+		IF(NOT(ISNULL(s.name)) && NOT(ISNULL(s.confidence)) && s.confidence > $PERSISTENT_BEST_PCNT, s.confidence,
+			IF(NOT(ISNULL(g.name)) && NOT(ISNULL(g.confidence)) && g.confidence > $PERSISTENT_BEST_PCNT, g.confidence,
+				IF(NOT(ISNULL(f.name)) && NOT(ISNULL(f.confidence)) && f.confidence > $PERSISTENT_BEST_PCNT, f.confidence,
+					IF(NOT(ISNULL(o.name)) && NOT(ISNULL(o.confidence)) && o.confidence > $PERSISTENT_BEST_PCNT, o.confidence,
+						IF(NOT(ISNULL(c.name)) && NOT(ISNULL(c.confidence)) && c.confidence > $PERSISTENT_BEST_PCNT, c.confidence,
+							IF(NOT(ISNULL(p.name)) && NOT(ISNULL(p.confidence)) && p.confidence > $PERSISTENT_BEST_PCNT, p.confidence,
+								IF(NOT(ISNULL(d.name)) && NOT(ISNULL(d.confidence)) && d.confidence > $PERSISTENT_BEST_PCNT, d.confidence, "0"))))))) AS best_tax_confidence,
+		IF(NOT(ISNULL(s.name)) && NOT(ISNULL(s.confidence)) && s.confidence > $PERSISTENT_BEST_PCNT, "species",
+			IF(NOT(ISNULL(g.name)) && NOT(ISNULL(g.confidence)) && g.confidence > $PERSISTENT_BEST_PCNT, "genus",
+				IF(NOT(ISNULL(f.name)) && NOT(ISNULL(f.confidence)) && f.confidence > $PERSISTENT_BEST_PCNT, "family",
+					IF(NOT(ISNULL(o.name)) && NOT(ISNULL(o.confidence)) && o.confidence > $PERSISTENT_BEST_PCNT, "order",
+						IF(NOT(ISNULL(c.name)) && NOT(ISNULL(c.confidence)) && c.confidence > $PERSISTENT_BEST_PCNT, "class",
+							IF(NOT(ISNULL(p.name)) && NOT(ISNULL(p.confidence)) && p.confidence > $PERSISTENT_BEST_PCNT, "phylum",
+								IF(NOT(ISNULL(d.name)) && NOT(ISNULL(d.confidence)) && d.confidence > $PERSISTENT_BEST_PCNT, "domain", "unknown"))))))) AS best_tax_level,
+		sequence
+	FROM $otu_table AS ot
+		INNER JOIN $seq_table AS st ON ot.OTUId = st.otu
+		LEFT JOIN $class_table AS d ON ot.OTUId = d.OTUId AND d.rank = "domain"
+		LEFT JOIN $class_table AS p ON ot.OTUId = p.OTUId AND p.rank = "phylum"
+		LEFT JOIN $class_table AS c ON ot.OTUId = c.OTUId AND c.rank = "class"
+		LEFT JOIN $class_table AS o ON ot.OTUId = o.OTUId AND o.rank = "order"
+		LEFT JOIN $class_table AS f ON ot.OTUId = f.OTUId AND f.rank = "family"
+		LEFT JOIN $class_table AS g ON ot.OTUId = g.OTUId AND g.rank = "genus"
+		LEFT JOIN $class_table AS s ON ot.OTUId = s.OTUId AND s.rank = "species"
+	WHERE 0
+EOF
+
+awk -F'\t' -v otu_table="$otu_table" -v ppcnt=$PERSISTENT_PCNT '{ if (line >= 1) printf("\t\tOR (%s / (SELECT SUM(%s) FROM %s) > %f)\n", $1, $1, otu_table, ppcnt); ++line; }' $SAMPLE_INFO >> $SQL
+
+cat << EOF >> $SQL
+	GROUP BY ot.OTUId
+	ORDER BY ( 0
+EOF
+
+awk -F'\t' '{ if (line >= 1) { printf("\t\t\t+ %s\n", $1); } ++line; }' $SAMPLE_INFO >> $SQL
+
+cat << EOF >> $SQL
+		) DESC
+;
+SELECT * FROM persistent_OTUs;
+EOF
+
+mysql -h $HOST $DB --local-infile < $SQL > $XLS
+#sed -i 's/\\t/\t/g' $XLS

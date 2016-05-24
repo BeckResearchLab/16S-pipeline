@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source globals
+source globals.sh
 
 SQL=$0.sql
 class_table=final_otus_classifications
@@ -8,7 +8,7 @@ class_flat=final_otus_classifications_flat
 seq_table=final_otus_sequences
 otu_table=final_otus
 
-XLS=community_dynamics.RDP.xls
+XLS=$OUTPUT_NAME.xls
 
 cat << EOF > $SQL
 DROP TABLE IF EXISTS $class_flat;
@@ -34,7 +34,7 @@ SELECT otus.OTUId,
 SELECT ot.OTUId,
 EOF
 
-awk -F'\t' '{ if (line >= 1) { printf("\t\t%s AS \"%s.%s\",\n", $1, $2, $3); } ++line; }' $SAMPLE_INFO_SUBSET >> $SQL
+awk -F'\t' '{ if (line >= 1) { printf("\t\t%s AS \"%s\",\n", $1, $1); } ++line; }' $SAMPLE_INFO_SUBSET >> $SQL
 
 cat << EOF >> $SQL
 		domain, domain_confidence, phylum, phylum_confidence, class, class_confidence,

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+R --no-save < 14.heatmap.R

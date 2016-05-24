@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source globals
+source globals.sh
 
 SQL=$0.sql
 XLS=$OUTPUT_NAME.xls
@@ -90,4 +90,4 @@ cat << EOF >> $SQL
 ;
 EOF
 
-mysql -h $HOST $DB < $SQL | sed "s/NULL//g" > $XLS
+mysql --local-infile -h $HOST $DB < $SQL | sed "s/NULL//g" > $XLS

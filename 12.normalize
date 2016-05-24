@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source globals.sh
+
+SQL=$0.read_sums.sql
+XLS=$0.read_sums.xls
+
+otu_table=final_otus
+
+cat << EOF > $SQL
+SELECT ot.OTUId
+EOF
+
+awk -F'\t' -v otu_table="$otu_table" '{ if (line >= 1) { printf("\t\t, SUM(%s) AS \"%s\"\n", $1, $1); } ++line; }' $SAMPLE_INFO_SUBSET >> $SQL
+
+cat << EOF >> $SQL
+ 	FROM $otu_table AS ot
+;
+EOF
+
+mysql -h $HOST $DB --local-infile < $SQL > $XLS
+
+R --no-save < 12.normalize.R
