@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source globals
+source globals.sh
 
 clean=1
 if [ "$#" -ge 1 ]
@@ -25,8 +25,8 @@ then
 fi
 
 echo creating symlinks to data
-ln -sf ../../2014_*/fasta-qual-mapping-files/*illumina-full.* .
-ln -sf ../../2014_*/fasta-qual-mapping-files/*illumina-mapping2.txt* .
+ln -sf ../data_raw/fasta-qual-mapping-files/*-full.* .
+ln -sf ../data_raw/fasta-qual-mapping-files/*-mapping2.txt* .
 
 echo making fastq
 for run in $RUNS
@@ -45,7 +45,7 @@ for run in $RUNS
 do
 	if [ ! -e $run-clean.fastq -o "$clean" -eq 1 ]
 	then
-		awk '{ if (substr($0, 1, 1) != "#") { id = $1; sub("Sample454." , "", id); printf(">%s\n%s\n", id, $2); } }' $run-mapping2.txt > $run-barcodes.fasta
+		awk '{ if (substr($0, 1, 1) != "#") { id = $1; printf(">%s\n%s\n", id, $2); } }' ../sample_info.xls > $run-barcodes.fasta
 		echo processing $run
 		echo python $FQRELABEL $run-full.fastq $PRIMER $run-barcodes.fasta ${run}_
 		python $FQRELABEL $run-full.fastq $PRIMER $run-barcodes.fasta ${run}_ > $run-clean.fastq
