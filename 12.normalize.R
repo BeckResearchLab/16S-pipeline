@@ -2,15 +2,16 @@
 
 library(docopt)
 
-"Usage: 12.normalize.R [-h] <filename>
+"Usage: 12.normalize.R [-h] <infilename> <outfilename>
 
 -h --help    show this
-filename     name of OTU input file" -> doc
+infilename   name of OTU input file
+outfilename  name of the normalized output file" -> doc
 args <- docopt(doc)
 
 library(DESeq2)
 
-d <- read.delim(args$filename, header=T, row.names=1)
+d <- read.delim(args$infilename, header=T, row.names=1)
 head(d)
 
 e <- d[, -which(names(d) %in% c("domain", "domain_confidence", "phylum", "phylum_confidence", "class", "class_confidence", "order_", "order_confidence", "family", "family_confidence", "genus", "genus_confidence", "species", "species_confidence", "sequence"))]
@@ -28,4 +29,4 @@ normCounts <- assay(rld)
 
 normD <- cbind(normCounts, d[, which(names(d) %in% c("domain", "domain_confidence", "phylum", "phylum_confidence", "class", "class_confidence", "order_", "order_confidence", "family", "family_confidence", "genus", "genus_confidence", "species", "species_confidence", "sequence"))])
 
-write.table(format(normD, digits=2), file='saliva.log_normalized.xls', quote=FALSE, sep='\t', col.names=NA)
+write.table(format(normD, digits=2), file=args$outfilename, quote=FALSE, sep='\t', col.names=NA)

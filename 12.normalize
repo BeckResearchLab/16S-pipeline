@@ -20,4 +20,4 @@ EOF
 
 mysql -h $HOST $DB --local-infile < $SQL > $XLS
 
-./12.normalize.R $OUTPUT_NAME.xls
+./12.normalize.R $OUTPUT_NAME.xls $OUTPUT_NAME.log_normalized.xls
